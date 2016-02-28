@@ -14,8 +14,9 @@ import types
 import requests
 import json
 
+import sys
 
-TOKEN_PICKLE_FILE_NAME = ".access_token"
+TOKEN_PICKLE_FILE_NAME = "access_token"
 HOST = "cs50.gachon.ac.kr"
 
 def getArgumentsParser(argv=None):
@@ -44,7 +45,7 @@ def printInformationMessage(actionType, assignmentName):
         message = "== Getting templates | "
     else:
         message = "== Submmting solutions | "
-    print (message + assignmentName)
+    sys.stdout.write  (message + assignmentName + "\n")
 
 # Get JWT token to access REST API
 def getToken():
@@ -54,7 +55,7 @@ def getToken():
                 token_file = pickle.load(accesstoken)
                 return token_file['token'], token_file['email']
         except EOFError:
-            print ("Existing access_token is NOT validated")
+            sys.stdout.write  ("Existing access_token is NOT validated"+ "\n")
             return None, None
     else:
         return None,None
@@ -96,12 +97,12 @@ def checkTokenReplacement(email):
         elif replacment.lower() in ['n','no','f','false']:
             return False
         else:
-            print ("Wrong Input")
+            sys.stdout.write  ("Wrong Input"+ "\n")
 
     return True
 
 def getFileContents(fileName):
-    with open (fileName, "r") as contens_file:
+    with open (fileName, "r", encoding="utf-8") as contens_file:
         contens = contens_file.read()
     return contens
 
@@ -138,14 +139,16 @@ def submitAssignmentFileToServer(access_token, assignment_file_name):
 def makeTemplateFile(result_text):
     try:
         data = json.loads(result_text, strict=False)
-        with open(data['template_file_name'], 'w') as f:
+        with open(data['template_file_name'], 'w', encoding='utf-8') as f:
+            print(type(data['template_file_contents']))
             f.write(data['template_file_contents'])
-            print ("%s file is created for your %s assignment" % (data['template_file_name'], data['assignment_name']))
+            sys.stdout.write  ("%s file is created for your %s assignment \n" % (data['template_file_name'], data['assignment_name']))
         return True
     except IOError:
-        print ("Unavailable making the template file: %s" % data['template_file_name'])
+        sys.stdout.write  ("Unavailable making the template file: %s \n" % data['template_file_name'])
         return False
-    except:
+    except TypeError:
+        sys.stdout.write  ("Unexpected Error occured")
         return False
 
 
@@ -153,15 +156,15 @@ def removeExpiredAccessKey():
     if os.path.isfile(TOKEN_PICKLE_FILE_NAME):
         os.remove(TOKEN_PICKLE_FILE_NAME)
     else:    ## Show an error ##
-        print("Error: %s file not found" % TOKEN_PICKLE_FILE_NAME)
+        sys.stdout.write ("Error: %s file not found \n" % TOKEN_PICKLE_FILE_NAME)
 
 def printTestResults(text):
     json_data = json.loads(text)
 
     a = "-"*20; b = "-"*10; c = "-"*20
-    print ( '%20s | %10s | %20s' % (a,b,c) )
-    print ( '%20s | %10s | %20s' % ("Function Name","Passed?","Feedback") )
-    print ( '%20s | %10s | %20s' % (a,b,c) )
+    sys.stdout.write  ( '%20s | %10s | %20s \n' % (a,b,c) )
+    sys.stdout.write  ( '%20s | %10s | %20s \n' % ("Function Name","Passed?","Feedback") )
+    sys.stdout.write  ( '%20s | %10s | %20s \n' % (a,b,c) )
 
     for result in json_data:
         if result['test_result'] == ('S'):
@@ -173,9 +176,9 @@ def printTestResults(text):
                 feedback = 'Check Your Logic'
             if result['test_result'] == ('F'):
                 feedback = 'Check Your Grammar'
-        print ( '%20s | %10s | %20s' % (result['assignment_detail'],passed,feedback ) )
+        sys.stdout.write  ( '%20s | %10s | %20s \n' % (result['assignment_detail'],passed,feedback ) )
 
-    print ( '%20s | %10s | %20s' % (a,b,c) )
+    sys.stdout.write  ( '%20s | %10s | %20s \n' % (a,b,c) )
 
 
 def main():
@@ -199,7 +202,7 @@ def main():
         while (access_token == None):
             [email, login_password] = getLoginInformation()
             access_token = getAccessTokenFromServer(email, login_password)
-            if (access_token == None): print ("Wrong Email or password. Please, input again.")
+            if (access_token == None): sys.stdout.write  ("Wrong Email or password. Please, input again. \n")
     else:
         answer = checkTokenReplacement(email)
         if (answer == False):
@@ -207,7 +210,7 @@ def main():
         while (access_token == None):
             [email, login_password] = getLoginInformation()
             access_token = getAccessTokenFromServer(email, login_password)
-            if (access_token == None): print ("Wrong Email or password. Please, input again.")
+            if (access_token == None): sys.stdout.write  ("Wrong Email or password. Please, input again. \n")
 
     # Make access pickle before end of program
     makeAccessTokenPickle(access_token, email)
@@ -217,14 +220,14 @@ def main():
         if (result.status_code == 200):
             is_file_created = makeTemplateFile(result.text)
             if (is_file_created == True):
-                print ("Thank you for using the program. Enjoy Your Assignment - From TeamLab")
+                sys.stdout.write ("Thank you for using the program. Enjoy Your Assignment - From TeamLab \n")
         elif (result.status_code == 403):
-            print (result.text)
+            sys.stdout.write  (result.text + "\n")
             removeExpiredAccessKey()
-            print ("Your expired access key removed. Please, try again")
+            sys.stdout.write  ("Your expired access key removed. Please, try again \n")
         elif (result.status_code == 500):
-            print (result.text)
-            print ("Unexpected error exists. Please contact teamlab.gachon@gmail.com ")
+            sys.stdout.write  (result.text + "\n")
+            sys.stdout.write  ("Unexpected error exists. Please contact teamlab.gachon@gmail.com \n")
 
     elif (actionType == "submit"):
         result = submitAssignmentFileToServer(access_token, assignment_name)
@@ -232,11 +235,11 @@ def main():
             printTestResults(result.text)
             # Make access pickle before end of program
         elif (result.status_code == 403):
-            print (result.text)
+            sys.stdout.write  (result.text +"\n")
             removeExpiredAccessKey()
-            print ("Your expired access key removed. Please, try again")
+            sys.stdout.write  ("Your expired access key removed. Please, try again \n")
         elif (result.status_code == 500):
-            print ("Unexpected error exists. Please contact teamlab.gachon@gmail.com ")
+            sys.stdout.write  ("Unexpected error exists. Please contact teamlab.gachon@gmail.com \n")
 
 if __name__ == "__main__":
     main()
