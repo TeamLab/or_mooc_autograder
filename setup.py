@@ -35,7 +35,7 @@ else:
     }
 
 setup(
-    name = 'gachon_autograder_client',
+    name = 'Gachon-Autograder-Client',
     version = '0.0.1',
     py_modules = ['gachon_autograder_client'],
     author = 'Teamlab@GachonUniversity',
