@@ -17,7 +17,8 @@ import json
 import sys
 
 TOKEN_PICKLE_FILE_NAME = "access_token"
-HOST = "cs50.gachon.ac.kr"
+# HOST = "cs50.gachon.ac.kr"
+HOST = "localhost:8000"
 
 def getArgumentsParser(argv=None):
     parser = argparse.ArgumentParser(
@@ -180,6 +181,22 @@ def printTestResults(text):
 
     sys.stdout.write  ( '%20s | %10s | %20s \n' % (a,b,c) )
 
+def get_assignment(email, password, assignment_name):
+    access_token = getAccessTokenFromServer(email, password)
+    makeAccessTokenPickle(access_token, email)
+
+    result = getAssignmentTemplateFileFromServer(access_token, assignment_name)
+    if (result.status_code == 200):
+        is_file_created = makeTemplateFile(result.text)
+        if (is_file_created == True):
+            sys.stdout.write ("Thank you for using the program. Enjoy Your Assignment - From TeamLab \n")
+    elif (result.status_code == 403):
+        sys.stdout.write  (result.text + "\n")
+        removeExpiredAccessKey()
+        sys.stdout.write  ("Your expired access key removed. Please, try again \n")
+    elif (result.status_code == 500):
+        sys.stdout.write  (result.text + "\n")
+        sys.stdout.write  ("Unexpected error exists. Please contact teamlab.gachon@gmail.com \n")
 
 def main():
 
