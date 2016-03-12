@@ -17,8 +17,11 @@ import json
 import sys
 
 TOKEN_PICKLE_FILE_NAME = "access_token"
-# HOST = "cs50.gachon.ac.kr"
-HOST = "localhost:8000"
+HOST = "cs50.gachon.ac.kr"
+
+def set_host_address(host_name):
+    global HOST
+    HOST = host_name
 
 def getArgumentsParser(argv=None):
     parser = argparse.ArgumentParser(
@@ -181,7 +184,9 @@ def printTestResults(text):
 
     sys.stdout.write  ( '%20s | %10s | %20s \n' % (a,b,c) )
 
-def get_assignment(email, password, assignment_name):
+def get_assignment(email, password, assignment_name, host_name=None):
+    if host_name is not None:
+        set_host_address(host_name)
     access_token = getAccessTokenFromServer(email, password)
     makeAccessTokenPickle(access_token, email)
 
@@ -197,6 +202,27 @@ def get_assignment(email, password, assignment_name):
     elif (result.status_code == 500):
         sys.stdout.write  (result.text + "\n")
         sys.stdout.write  ("Unexpected error exists. Please contact teamlab.gachon@gmail.com \n")
+
+
+def submit_assignment(email, password, assignment_name, host_name=None):
+    if host_name is not None:
+        set_host_address(host_name)
+    access_token = getAccessTokenFromServer(email, password)
+    makeAccessTokenPickle(access_token, email)
+
+    result = submitAssignmentFileToServer(access_token, assignment_name)
+    if (result.status_code == 200):
+        printTestResults(result.text)
+        # Make access pickle before end of program
+    elif (result.status_code == 403):
+        sys.stdout.write  (result.text +"\n")
+        removeExpiredAccessKey()
+        sys.stdout.write  ("Your expired access key removed. Please, try again \n")
+    elif (result.status_code == 500):
+        sys.stdout.write  ("Unexpected error exists. Maybe you need to debuge \n")
+        sys.stdout.write  ("Unexpected error exists. Please contact teamlab.gachon@gmail.com \n")
+
+
 
 def main():
 
